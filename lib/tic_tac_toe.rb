@@ -1,3 +1,5 @@
+require 'pry'
+
 class Board
     attr_accessor :squares
 
@@ -64,7 +66,7 @@ class Board
     end
 
     def stalemate?
-        self.squares.all? {|position, square| square.piece} ? true : false
+        self.squares.all? {|position, square| square.piece} && !self.victory? ? true : false
     end
 end
 
@@ -87,7 +89,7 @@ class Square
 end
 
 class Player
-    attr_reader :name, :pieces
+    attr_accessor :name, :pieces
     
     def initialize(name, pieces=nil)
         @name = name
@@ -99,54 +101,65 @@ class Player
     end
 end
 
-def play_turn(player, board)
-    puts "-"*12
-    puts "#{player.name.upcase}'s TURN:"
-    puts "-"*12
-    puts "#{player.name}, please enter a position to put a #{player.pieces.to_s}:"
-    puts "\n"
-    board.place_piece(player.pieces, get_choice(board))
-    board.show
-end
+class Game
 
-def get_choice(board)
-    choice = gets.chomp.upcase.to_sym
-
-    while !choice.to_s.match(/[ABC][123]/) || board.squares[choice].piece
-        puts "\n"
-        puts "That position doesn't exist or there's already another piece there."
-        puts "Please choose another position:" + "\n"*2
-        choice = gets.chomp.upcase.to_sym
+    attr_reader :board, :player_one, :player_two
+    def initialize
+        @board = Board.new
+        @player_one = Player.new("", "nought")
+        @player_two = Player.new("", "cross")
     end
 
-    choice
+    def play_game
+        puts "Player 1, please enter your name:"
+        @player_one.name = gets.chomp
+        puts "\n"
+        puts "Player 2, please enter your name:"
+        @player_two.name = gets.chomp
+        puts "\n"
+
+        puts "#{@player_one} will be noughts(O) and #{@player_two} will be crosses(X)."
+        @board.show
+
+        players = [@player_one, @player_two]
+
+        until @board.victory? || @board.stalemate?
+            play_turn(players.first, @board)
+            players.rotate!
+        end
+
+        if @board.victory?
+            puts "Congrats #{players.last}, you won!"
+        else
+            puts "Looks like there's no spaces left! I guess there's no winner this time, then."
+        end
+
+        puts "Game Over. Thanks for playing!"
+    end
+
+    def play_turn(player, board)
+        puts "-"*12
+        puts "#{player.name.upcase}'s TURN:"
+        puts "-"*12
+        puts "#{player.name}, please enter a position to put a #{player.pieces.to_s}:"
+        puts "\n"
+        board.place_piece(player.pieces, get_choice)
+        board.show
+    end
+
+    def get_choice
+        def valid_choice?(choice)
+            choice.to_s.upcase.match(/[ABC][123]/) && !@board.squares[choice.to_sym.upcase].piece ? true : false
+        end
+
+        choice = gets.chomp.upcase.to_sym
+        while !valid_choice?(choice)
+            puts "\n"
+            puts "That position doesn't exist or there's already another piece there."
+            puts "Please choose another position:" + "\n"*2
+            choice = gets.chomp.upcase.to_sym
+        end
+    
+        choice
+    end
 end
-
-
-my_board = Board.new
-
-puts "Player 1, please enter your name:"
-player_one = Player.new(gets.chomp, "nought")
-puts "\n"
-puts "Player 2, please enter your name:"
-player_two = Player.new(gets.chomp, "cross")
-puts "\n"
-
-puts "#{player_one} will be noughts(O) and #{player_two} will be crosses(X)."
-my_board.show
-
-
-players = [player_one, player_two]
-
-until my_board.victory? || my_board.stalemate?
-    play_turn(players.first, my_board)
-    players.rotate!
-end
-
-if my_board.victory?
-    puts "Congrats #{players.last}, you won!"
-else
-    puts "Looks like there's no spaces left! I guess there's no winner this time, then."
-end
-
-puts "Game Over. Thanks for playing!"
