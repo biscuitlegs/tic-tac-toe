@@ -49,9 +49,18 @@ describe Game do
     let(:game) { Game.new }
 
     describe '#get_choice' do
-        it "returns a valid position" do
-            allow(game).to receive(:gets).and_return("A1")
-            expect(game.get_choice).to eql(:A1)
+        context "when given a valid position" do
+            it "returns a valid position" do
+                allow(game).to receive(:gets).and_return("A1")
+                expect(game.get_choice).to eql(:A1)
+            end
+        end
+        context "when given an invalid position" do
+            it "asks for a new position until it is valid" do
+                allow(game).to receive(:puts).and_return("")
+                allow(game).to receive(:gets).and_return("J9", "B2")
+                expect(game.get_choice).to eql(:B2)
+            end
         end
     end
     describe '#valid_choice?' do
